@@ -1,46 +1,32 @@
+from pyglet.graphics import Batch
 from pyglet.window import Window
-from pyglet import event, clock, app
-from main_classes import GameC
+from pyglet import app, clock
+from scenes import *
 from constants import WINDOW_SIZE
-from content import player1
+import pyglet
 
-global SCREEN
-global APP
+class MainWindow(Window):
+    def __init__(self):
+        super().__init__()
+        self.set_size(WINDOW_SIZE['width'], WINDOW_SIZE['height'])
+        clock.schedule_interval(self.update, 1/60)
+        self.fps_display = clock.ClockDisplay()
+        self.scene = SceneMainMenu(self)
+        self.set_vsync(True)
+    def on_draw(self):
+        self.clear()
+        self.scene.draw()
+        self.fps_display.draw()
+    def on_key_press(self, key, mod):
+        self.scene.input(key, True)
+    def on_key_release(self, key, mod):
+        self.scene.input(key, False)
+    def update(self, dt):
+        self.scene.update(dt)
+    def change_scene(self, scene):
+        self.scene.exit()
+        self.scene = scene(self)
 
-SCREEN = Window(WINDOW_SIZE['width'], WINDOW_SIZE['height'])
-
-class ApplicationManager:
-    def __init__(self, manager):
-        self.manager = manager()
-        self.manager.player = player1()
-    def send_update(self, delta_time):
-        self.manager.on_update(delta_time)
-    def send_draw(self):
-        SCREEN.clear()
-        self.manager.on_draw()
-        SCREEN.flip()
-    def send_input(self, key, status):
-        if key in list(self.manager.inputs.keys()):
-            self.manager.inputs[key] = status
-
-def game_loop(delta_time):
-    APP.send_update(delta_time)
-
-@SCREEN.event
-def on_draw():
-    APP.send_draw()
-
-@SCREEN.event
-def on_key_press(symbol, _):
-    APP.send_input(symbol, True)
-
-@SCREEN.event
-def on_key_release(symbol, _):
-    APP.send_input(symbol, False)
-
-APP = ApplicationManager(GameC)
-
-if __name__ == "__main__":
-    APP = ApplicationManager(GameC)
-    clock.schedule(game_loop)
+if __name__ == '__main__':
+    window = MainWindow()
     app.run()
